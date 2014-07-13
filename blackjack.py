@@ -110,17 +110,28 @@ class Player(object):
         self.bet = 0
         self.hand = None
         self.stand = False
+        self.wins = 0
+        self.pushes = 0
+        self.losses = 0
 
     def reset(self):
         self.bet = 0
         self.hand = None
         self.stand = False
 
-    def lose(self, loss):
-        self.chips -= loss
-
     def win(self, winnings):
+        print self.name + ' win %d chip(s).' % winnings
         self.chips += winnings
+        self.wins += 1
+
+    def lose(self, loss):
+        print self.name + ' lose %d chip(s).' % loss
+        self.chips -= loss
+        self.losses += 1
+
+    def push(self, bet):
+        print self.name + ' keep %d chip(s).' % bet
+        self.pushes += 1
 
     def hit(self, card):
         self.hand.add_card(card)
@@ -157,6 +168,11 @@ class Game(object):
         self.deck = Deck()
         self.dealer.reset()
         self.player.reset()
+        print '\nYou have:'
+        print 'Won    %d games' % self.player.wins
+        print 'Pushed %d games' % self.player.pushes
+        print 'Lost   %d games\n' % self.player.losses
+        print 'You have %d chips remaining' % self.player.chips
 
     def get_player_bet(self):
         while True:
@@ -167,25 +183,31 @@ class Game(object):
             if not bet_input.isdigit():
                 print 'Input Error! Please try again.'
             elif int(bet_input) > self.player.chips:
-                print 'You do not have enough chips! Please try again.'
+                print 'You do not have enough chips for that bet! Please try again.'
             else:
                 return int(bet_input)
 
-    def deal_and_print_initial_hands(self):
+    def deal_initial_hands(self):
         self.dealer.hand = self.deck.deal_hand()
         self.player.hand = self.deck.deal_hand()
-        self.print_table()
 
     def blackjack_check(self):
         if self.player.max_score() == 21 and self.dealer.max_score() == 21:
             self.print_table(hide_dealer_card=False)
             print 'You PUSH!'
-            print 'You keep your %d chips.' % self.player.bet
+            self.player.push(self.player.bet)
             return True
         elif self.player.max_score() == 21:
-            print 'BLACKJACK! You win %d chips!' % (self.player.bet * 1.5)
+            self.print_table(hide_dealer_card=False)
+            print 'BLACKJACK!'
             self.player.win(self.player.bet * 1.5)
             return True
+        elif self.dealer.max_score() == 21:
+            self.print_table(hide_dealer_card=False)
+            print 'Dealer BLACKJACK!'
+            self.player.lose(self.player.bet)
+            return True
+        self.print_table()
         return False
 
     def player_choices(self):
@@ -210,7 +232,6 @@ class Game(object):
         if self.player.is_bust():
             self.player.stand = True
             print 'You BUST!'
-            print 'You lose %d chips.\n' % self.player.bet
             self.player.lose(self.player.bet)
 
     def dealer_choices(self):
@@ -224,18 +245,15 @@ class Game(object):
         if not self.player.is_bust():
             if self.dealer.is_bust():
                 print 'Dealer BUST!'
-                print 'You win %d chips.\n' % self.player.bet
                 self.player.win(self.player.bet)
             elif self.player.max_score() == self.dealer.max_score():
                 print 'You PUSH!'
-                print 'You keep your bet of %d chip.\n' % self.player.bet
+                self.player.push(self.player.bet)
             elif self.player.max_score() > self.dealer.max_score():
                 print 'You WIN!'
-                print 'You win %d chips.\n' % self.player.bet
                 self.player.win(self.player.bet)
             elif self.player.max_score() < self.dealer.max_score():
                 print 'You LOSE!'
-                print 'You lose %d chips.\n' % self.player.bet
                 self.player.lose(self.player.bet)
 
     def play(self):
@@ -244,15 +262,15 @@ class Game(object):
         while self.player.chips > 0:
             # 1: Set up
             self.set_up()
-            print 'You have %d chips remaining' % self.player.chips
             
             # 2: Get player's bet
             self.player.bet = self.get_player_bet()
 
-            self.deal_and_print_initial_hands()
+            self.deal_initial_hands()
 
-            # 3: Check for blackjacks
+            # 3: Check for blackjacks and print initial table
             if self.blackjack_check():
+                print '===================================='
                 continue
 
             # 4: Ask user hit or stand until stand/bust

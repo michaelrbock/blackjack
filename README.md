@@ -11,7 +11,7 @@ A text-based, 1 player Blackjack game.
 ## "Screenshot"
 ```
 You have 96 chips remaining
-Enter bet for this hand (or 'exit' to quit): 1
+Enter bet for this hand (or 'exit' to quit): 10
 ==================
 
 Dealer: 
@@ -38,5 +38,6 @@ You: 21
 |        J|  |        A|  
 \_________/  \_________/  
 
-BLACKJACK! You win 1 chips!
+BLACKJACK!
+You win 10 chip(s)!
 ```
