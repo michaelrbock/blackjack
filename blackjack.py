@@ -200,7 +200,9 @@ class Game(object):
                 else:
                     correct_input = True
             if hit_or_stand == 'hit' or hit_or_stand == 'h':
+                # Hit and re-print table
                 self.player.hit(self.deck.deal_card())
+                self.print_table()
             elif hit_or_stand == 'stand' or hit_or_stand == 's':
                 self.player.stand = True
 
@@ -250,7 +252,7 @@ class Game(object):
             self.deal_and_print_initial_hands()
 
             # 3: Check for blackjacks
-            if blackjack_check():
+            if self.blackjack_check():
                 continue
 
             # 4: Ask user hit or stand until stand/bust
