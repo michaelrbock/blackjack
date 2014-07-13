@@ -9,7 +9,7 @@ A text-based, 1 player Blackjack game.
 ```> python blackjack.py```
 
 ## "Screenshot"
-
+```
  _________    _________
 /         \  /         \
 |J        |  |A        |
@@ -20,3 +20,4 @@ A text-based, 1 player Blackjack game.
 |    `    |  |         |
 |        J|  |        A|
 \_________/  \_________/
+```
