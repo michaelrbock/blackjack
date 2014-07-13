@@ -153,96 +153,123 @@ class Game(object):
             else self.player.min_score())
         self.player.hand.print_hand()
 
+    def set_up(self):
+        self.deck = Deck()
+        self.dealer.reset()
+        self.player.reset()
+
+    def get_player_bet(self):
+        while True:
+            bet_input = raw_input("Enter bet for this hand (or 'exit' to quit): ").strip().lower()
+            if bet_input == 'exit':
+                print 'Thanks for playing :)'
+                sys.exit(0)
+            if not bet_input.isdigit():
+                print 'Input Error! Please try again.'
+            elif int(bet_input) > self.player.chips:
+                print 'You do not have enough chips! Please try again.'
+            else:
+                return int(bet_input)
+
+    def deal_and_print_initial_hands(self):
+        self.dealer.hand = self.deck.deal_hand()
+        self.player.hand = self.deck.deal_hand()
+        self.print_table()
+
+    def blackjack_check(self):
+        if self.player.max_score() == 21 and self.dealer.max_score() == 21:
+            self.print_table(hide_dealer_card=False)
+            print 'You PUSH!'
+            print 'You keep your %d chips.' % self.player.bet
+            return True
+        elif self.player.max_score() == 21:
+            print 'BLACKJACK! You win %d chips!' % (self.player.bet * 1.5)
+            self.player.win(self.player.bet * 1.5)
+            return True
+        return False
+
+    def player_choices(self):
+        print ''
+        while not self.player.stand and not self.player.is_bust():
+            correct_input = False
+            while not correct_input:
+                hit_or_stand = raw_input("Enter 'hit' or 'stand': ").strip().lower()
+                if (hit_or_stand != 'hit' and hit_or_stand != 'stand' and
+                    hit_or_stand != 'h' and hit_or_stand != 's'):
+                    print 'Input Error! Please try again.'
+                else:
+                    correct_input = True
+            if hit_or_stand == 'hit' or hit_or_stand == 'h':
+                self.player.hit(self.deck.deal_card())
+            elif hit_or_stand == 'stand' or hit_or_stand == 's':
+                self.player.stand = True
+
+    def check_player_bust(self):
+        if self.player.is_bust():
+            self.player.stand = True
+            print 'You BUST!'
+            print 'You lose %d chips.\n' % self.player.bet
+            self.player.lose(self.player.bet)
+
+    def dealer_choices(self):
+        if not self.player.is_bust():
+            self.print_table(hide_dealer_card=False)
+            while self.dealer.max_score() < 17:
+                self.dealer.hit(self.deck.deal_card())
+                self.print_table(hide_dealer_card=False)
+
+    def final_outcome(self):
+        if not self.player.is_bust():
+            if self.dealer.is_bust():
+                print 'Dealer BUST!'
+                print 'You win %d chips.\n' % self.player.bet
+                self.player.win(self.player.bet)
+            elif self.player.max_score() == self.dealer.max_score():
+                print 'You PUSH!'
+                print 'You keep your bet of %d chip.\n' % self.player.bet
+            elif self.player.max_score() > self.dealer.max_score():
+                print 'You WIN!'
+                print 'You win %d chips.\n' % self.player.bet
+                self.player.win(self.player.bet)
+            elif self.player.max_score() < self.dealer.max_score():
+                print 'You LOSE!'
+                print 'You lose %d chips.\n' % self.player.bet
+                self.player.lose(self.player.bet)
+
     def play(self):
         print 'Welcome to Blackjack!'
 
         while self.player.chips > 0:
-            # Reset for next hand
-            self.deck = Deck()
-            self.dealer.reset()
-            self.player.reset()
-
-            # Get Player's bet
+            # 1: Set up
+            self.set_up()
             print 'You have %d chips remaining' % self.player.chips
+            
+            # 2: Get player's bet
+            self.player.bet = self.get_player_bet()
 
-            correct_input = False
-            while not correct_input:
-                bet_input = raw_input(
-                    "Enter bet for this hand (or 'exit' to quit): ").strip().lower()
-                if bet_input == 'exit':
-                    print 'Thanks for playing :)'
-                    return
-                if not bet_input.isdigit():
-                    print 'Input Error! Please try again.'
-                elif int(bet_input) > self.player.chips:
-                    print 'You do not have enough chips! Please try again.'
-                else:
-                    self.player.bet = int(bet_input)
-                    correct_input = True 
+            self.deal_and_print_initial_hands()
 
-            # Deal initial hands
-            self.dealer.hand = self.deck.deal_hand()
-            self.player.hand = self.deck.deal_hand()
+            # 3: Check for blackjacks
+            if blackjack_check():
+                continue
 
-            # Print inital hands
+            # 4: Ask user hit or stand until stand/bust
+            self.player_choices()
+
+            # 5: print display again
             self.print_table()
 
-            # Check for player blackjack
-            if max(self.player.scores()) == 21:
-                print 'BLACKJACK! You win %d chips!' % (self.player.bet * 1.5)
-                self.player.win(self.player.bet * 1.5)
+            # 6: Check if player bust
+            self.check_player_bust()
 
-            # Ask user hit or stand until stand
-            print ''
-            while not self.player.stand and not self.player.is_bust():
-                correct_input = False
-                while not correct_input:
-                    hit_or_stand = raw_input("Enter 'hit' or 'stand': ").strip().lower()
-                    if (hit_or_stand != 'hit' and hit_or_stand != 'stand' and
-                        hit_or_stand != 'h' and hit_or_stand != 's'):
-                        print 'Input Error! Please try again.'
-                    else:
-                        correct_input = True
-                if hit_or_stand == 'hit' or hit_or_stand == 'h':
-                    self.player.hit(self.deck.deal_card())
-                elif hit_or_stand == 'stand' or hit_or_stand == 's':
-                    self.player.stand = True
-                # print display again
-                self.print_table()
+            # 7: Once stand, reveal dealer card, dealer logic
+            self.dealer_choices()
 
-            # Check if player bust
-            if self.player.is_bust():
-                self.player.stand = True
-                print 'You BUST!'
-                print 'You lose %d chips.\n' % self.player.bet
-                self.player.lose(self.player.bet)
-
-            # Once stand, reveal dealer card, dealer logic
-            if not self.player.is_bust():
-                self.print_table(hide_dealer_card=False)
-                while max(self.dealer.scores()) < 17:
-                    self.dealer.hit(self.deck.deal_card())
-                    self.print_table(hide_dealer_card=False)
-
-            # Check for final outcome
-            if not self.player.is_bust():
-                if self.dealer.is_bust():
-                    print 'Dealer BUST!'
-                    print 'You win %d chips.\n' % self.player.bet
-                    self.player.win(self.player.bet)
-                elif max(self.player.scores()) == max(self.dealer.scores()):
-                    print 'You PUSH!'
-                    print 'You keep your bet of %d chip.\n' % self.player.bet
-                elif max(self.player.scores()) > max(self.dealer.scores()):
-                    print 'You WIN!'
-                    print 'You win %d chips.\n' % self.player.bet
-                    self.player.win(self.player.bet)
-                elif max(self.player.scores()) < max(self.dealer.scores()):
-                    print 'You LOSE!'
-                    print 'You lose %d chips.\n' % self.player.bet
-                    self.player.lose(self.player.bet)
+            # 8: Check for final outcome
+            self.final_outcome()
 
             print '===================================='
+
         print 'You are out of money!'
         print 'Game over :('
 
