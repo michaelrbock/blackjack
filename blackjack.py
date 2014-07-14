@@ -8,6 +8,19 @@ STARTING_CHIPS = 100
 class Card(object):
     number_to_name = {1: 'A', 11: 'J', 12: 'Q', 13: 'K'}
 
+    @staticmethod
+    def HIDDEN_CARD():
+        return [(' ' + ('_' * 9) + ' '),
+                ('/' + (' ' * 9) + '\\'),
+                ('|X' + (' ' * 8) + '|'),
+                ('|         |'),
+                ('|         |'),
+                ('|         |'),
+                ('|         |'),
+                ('|         |'),
+                ('|' + (' ' * 8) + 'X|'),
+                ('\\' + ('_' * 9) +'/')]
+
     def __init__(self, number, suit):
         self.number = number
         self.suit = suit
@@ -49,17 +62,6 @@ class Card(object):
 
 
 class Hand(object):
-    HIDDEN_CARD = [(' ' + ('_' * 9) + ' '),
-                   ('/' + (' ' * 9) + '\\'),
-                   ('|X' + (' ' * 8) + '|'),
-                   ('|         |'),
-                   ('|         |'),
-                   ('|         |'),
-                   ('|         |'),
-                   ('|         |'),
-                   ('|' + (' ' * 8) + 'X|'),
-                   ('\\' + ('_' * 9) +'/')]
-
     def __init__(self, cards):
         self.hand = cards
 
@@ -78,7 +80,7 @@ class Hand(object):
         for row in xrange(10):
             for idx, card in enumerate(self.hand):
                 if hide_first_card and idx == 0:
-                    sys.stdout.write(self.HIDDEN_CARD[row])
+                    sys.stdout.write(Card.HIDDEN_CARD()[row])
                 else:
                     sys.stdout.write(card.display[row])
                 sys.stdout.write('  ')
@@ -120,17 +122,17 @@ class Player(object):
         self.stand = False
 
     def win(self, winnings):
-        print self.name + ' win %d chip(s).' % winnings
+        print 'You win %d chip(s).' % winnings
         self.chips += winnings
         self.wins += 1
 
     def lose(self, loss):
-        print self.name + ' lose %d chip(s).' % loss
+        print 'You lose %d chip(s).' % loss
         self.chips -= loss
         self.losses += 1
 
     def push(self, bet):
-        print self.name + ' keep %d chip(s).' % bet
+        print 'You keep %d chip(s).' % bet
         self.pushes += 1
 
     def hit(self, card):
@@ -160,7 +162,7 @@ class Game(object):
         print 'Dealer: %s' % ('' if hide_dealer_card else (str(self.dealer.max_score())
             if self.dealer.max_score() <= 21 else str(self.dealer.min_score())))
         self.dealer.hand.print_hand(hide_first_card=hide_dealer_card)
-        print 'You: %d' % (self.player.max_score() if self.player.max_score() <= 21 
+        print '%s: %d' % (self.player.name, self.player.max_score() if self.player.max_score() <= 21
             else self.player.min_score())
         self.player.hand.print_hand()
 
@@ -292,7 +294,7 @@ class Game(object):
 
             print '===================================='
 
-        print 'You are out of money!'
+        print '%s are out of money!' % self.player.name
         print 'Game over :('
 
 if __name__ == '__main__':
