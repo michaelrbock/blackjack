@@ -184,6 +184,8 @@ class Game(object):
                 print 'Input Error! Please try again.'
             elif int(bet_input) > self.player.chips:
                 print 'You do not have enough chips for that bet! Please try again.'
+            elif int(bet_input) <= 0:
+                print "You can't bet less than 1 chip! Please try again."
             else:
                 return int(bet_input)
 
